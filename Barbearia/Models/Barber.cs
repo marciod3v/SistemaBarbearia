@@ -12,6 +12,6 @@ namespace Barbearia.Models
 		public string Phone { get; set; }
 		public TimeSpan StartTimeWork { get; set; }
 		public TimeSpan EndTimeWork { get; set; }
-		public int DefaultDurationService { get; set; }
+		public int DefaultDurationService { get; set; } = 60;
     }
 }

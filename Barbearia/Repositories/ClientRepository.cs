@@ -13,7 +13,7 @@ namespace Barbearia.Repositories
 		private readonly string _connectionString;
 		public ClientRepository()
 		{
-			_connectionString = ConfigurationManager.ConnectionStrings["BarbeariaDB"].ConnectionString;
+			_connectionString = Configurations.Configurations.GetConnString();
 		}
         public async Task<List<Models.Client>> GetAllClients()
 		{
@@ -115,7 +115,7 @@ namespace Barbearia.Repositories
 			using (SqlConnection conn = new SqlConnection(_connectionString))
 			{
 				await conn.OpenAsync();
-				using (SqlCommand cmd = new SqlCommand("UPDATE Client SET (Name = @Name,Phone = @Phone) WHERE Id = @Id",conn))
+				using (SqlCommand cmd = new SqlCommand("UPDATE Client SET Name = @Name,Phone = @Phone WHERE Id = @Id",conn))
 				{
                     cmd.Parameters.AddWithValue("@Id", client.Id);
                     cmd.Parameters.AddWithValue("@Name", client.Name);
