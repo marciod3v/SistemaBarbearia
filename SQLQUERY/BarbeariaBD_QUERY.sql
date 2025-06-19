@@ -37,3 +37,7 @@ create table Appointments(
 	CONSTRAINT FK_Barber FOREIGN KEY (IdBarber) REFERENCES Barber(Id),
 	CONSTRAINT FK_Service FOREIGN KEY(IdService) REFERENCES Service(id)
 );
+
+INSERT INTO Client ([Name],Phone) VALUES ('Teste','14999999999');
+
+SELECT * FROM Client;

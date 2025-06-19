@@ -10,59 +10,142 @@ namespace Barbearia.Repositories
 {
 	public class ClientRepository
 	{
-        public SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["BarbeariaDB"].ConnectionString);
-        public SqlCommand cmd = new SqlCommand();
-		public SqlDataReader dr;
-
+		private readonly string _connectionString;
+		public ClientRepository()
+		{
+			_connectionString = ConfigurationManager.ConnectionStrings["BarbeariaDB"].ConnectionString;
+		}
         public async Task<List<Models.Client>> GetAllClients()
 		{
 			List<Models.Client> ClientList = new List<Models.Client>();
-			using (conn)
+			using (SqlConnection conn = new SqlConnection(_connectionString))
 			{
 				await conn.OpenAsync();
-				using (cmd)
+				using (SqlCommand cmd = new SqlCommand("SELECT * FROM Client;",conn))
 				{
-					cmd.CommandText = "SELECT * FROM Client;";
-					dr = await cmd.ExecuteReaderAsync();
+					using (SqlDataReader dr = await cmd.ExecuteReaderAsync())
+					{
+                        while (await dr.ReadAsync())
+                        {
+                            ClientList.Add(new Models.Client
+                            {
+                                Id = dr.GetInt32(dr.GetOrdinal("Id")),
+                                Name = dr.GetString(dr.GetOrdinal("Name")),
+                                Phone = dr.GetString(dr.GetOrdinal("Phone"))
+                            });
+                        }
+                    }
+                }
+			}
+            return ClientList;
+        }
+	
+		public async Task<Models.Client> GetClientByName(string name)
+		{
+			using (SqlConnection conn = new SqlConnection(_connectionString))
+			{
+				await conn.OpenAsync();
+				using (SqlCommand cmd = new SqlCommand("SELECT * FROM Client WHERE Name LIKE '%'@name'%';",conn))
+				{
+					cmd.Parameters.AddWithValue("@name", name);
+					using (SqlDataReader dr = await cmd.ExecuteReaderAsync())
+					{
+                        if (await dr.ReadAsync())
+                        {
+                            return new Models.Client
+                            {
+                                Id = dr.GetInt32(dr.GetOrdinal("Id")),
+                                Name = dr.GetString(dr.GetOrdinal("Name")),
+                                Phone = dr.GetString(dr.GetOrdinal("Phone"))
+                            };
+                        }
+                    }
+                }
+			}
+            return null;
+        }
+	
+		public async Task<Models.Client> GetClientByPhone(string phone)
+		{
+			using (SqlConnection conn = new SqlConnection(_connectionString))
+			{
+				await conn.OpenAsync();
+				using (SqlCommand cmd = new SqlCommand("SELECT * FROM Client WHERE Phone = @phone;",conn))
+				{
+					cmd.Parameters.AddWithValue("@phone", phone);
+					using (SqlDataReader dr = await cmd.ExecuteReaderAsync())
+					{
+                        if (await dr.ReadAsync())
+                        {
+                            return new Models.Client
+                            {
+                                Id = dr.GetInt32(dr.GetOrdinal("Id")),
+                                Name = dr.GetString(dr.GetOrdinal("Name")),
+                                Phone = dr.GetString(dr.GetOrdinal("Phone"))
+                            };
+                        }
+                    }
+                }
+			}
+            return null;
+        }
+	
+		public async Task<bool> CreateClient(Models.Client client)
+		{
+			using (SqlConnection conn = new SqlConnection(_connectionString))
+			{
+				await conn.OpenAsync();
+				using (SqlCommand cmd = new SqlCommand("INSERT INTO Client (Name,Phone) VALUES(@Name,@Phone);",conn))
+				{
+					cmd.Parameters.AddWithValue("@Name", client.Name);
+					cmd.Parameters.AddWithValue("@Phone", client.Phone);
 
-                    while (await dr.ReadAsync())
+                    if (await cmd.ExecuteNonQueryAsync() > 0)
                     {
-						ClientList.Add(new Models.Client
-						{
-							Id = dr.GetInt32(dr.GetOrdinal("Id")),
-							Name = dr.GetString(dr.GetOrdinal("Name")),
-							Phone = dr.GetString(dr.GetOrdinal("Phone"))
-						});
+						return true;
                     }
 
-					return ClientList;
+					return false;
+                }
+			}
+		}
+		
+		public async Task<bool> EditClient(Models.Client client)
+		{
+			using (SqlConnection conn = new SqlConnection(_connectionString))
+			{
+				await conn.OpenAsync();
+				using (SqlCommand cmd = new SqlCommand("UPDATE Client SET (Name = @Name,Phone = @Phone) WHERE Id = @Id",conn))
+				{
+                    cmd.Parameters.AddWithValue("@Id", client.Id);
+                    cmd.Parameters.AddWithValue("@Name", client.Name);
+					cmd.Parameters.AddWithValue("@Phone", client.Phone);
+
+                    if (await cmd.ExecuteNonQueryAsync() > 0)
+                    {
+						return true;
+                    }
+
+					return false;
                 }
 			}
 		}
 	
-		public async Task<Models.Client> GetClientByName(string name)
+		public async Task<bool> DeleteClient(int id)
 		{
-			using (conn)
+			using (SqlConnection conn = new SqlConnection(_connectionString))
 			{
 				await conn.OpenAsync();
-				using (cmd)
+				using (SqlCommand cmd = new SqlCommand("DELETE FROM Client WHERE Id = @Id;",conn))
 				{
-					cmd.CommandText = "SELECT * FROM Client WHERE Name LIKE '%'@name'%';";
-					cmd.Parameters.AddWithValue("@name", name);
-					dr = await cmd.ExecuteReaderAsync();
-                    if (await dr.ReadAsync())
-                    {
-						var client = new Models.Client
-						{
-							Id = dr.GetInt32(dr.GetOrdinal("Id")),
-							Name = dr.GetString(dr.GetOrdinal("Name")),
-							Phone = dr.GetString(dr.GetOrdinal("Phone"))
-						};
+					cmd.Parameters.AddWithValue("@Id", id);
 
-						return client;
+                    if (await cmd.ExecuteNonQueryAsync() > 0)
+                    {
+						return true;
                     }
 
-					return null;
+					return false;
                 }
 			}
 		}
